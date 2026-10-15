@@ -1,0 +1,31 @@
+{
+	"schemaVersion": 1,
+	"id": "crystalglow",
+	"version": "${version}",
+	"name": "Crystal Glow",
+	"description": "end crystals glow with a cheap shader glow. color, size, strength, effects and range in the settings (key U).",
+	"authors": ["wysss"],
+	"contact": {"sources": "https://github.com/realwysss/Crystal-Glow"},
+	"license": "All-Rights-Reserved",
+	"icon": "assets/crystalglow/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": ["dev.crgl.CrGl"],
+		"modmenu": ["dev.crgl.ModmenuIntgr"]
+	},
+	"mixins": [
+		{
+			"config": "crystalglow.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"suggests": {
+		"modmenu": "*"
+	},
+	"depends": {
+		"fabricloader": ">=0.16.0",
+		"cloth-config": "*",
+		"minecraft": ">=1.21.11 <1.22",
+		"java": ">=21"
+	}
+}

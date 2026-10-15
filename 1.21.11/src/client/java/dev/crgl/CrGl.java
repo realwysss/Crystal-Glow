@@ -8,9 +8,11 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.resources.Identifier;
 
 public class CrGl implements ClientModInitializer {
+	public static KeyMapping key;
+
 	public void onInitializeClient() {
 		Cfg.ld();
-		KeyMapping k = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.crystalglow.open", InputConstants.KEY_U, KeyMapping.Category.register(Identifier.fromNamespaceAndPath("crystalglow", "main"))));
+		KeyMapping k = key = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.crystalglow.open", InputConstants.KEY_U, KeyMapping.Category.register(Identifier.fromNamespaceAndPath("crystalglow", "main"))));
 		ClientTickEvents.END_CLIENT_TICK.register(m -> {
 			while (k.consumeClick()) if (m.screen == null) m.setScreen(new dev.crgl.ui.Panel(null));
 		});

@@ -2,10 +2,11 @@
 
 # Crystal Glow
 
-end crystals glow with a cheap shader glow, in the color you pick.
+end crystals glow with a cheap shader glow, in the color you pick. a second glow sits inside the crystal on the pink core.
 
-client side fabric mod for 1.21.11, 26.1 and 26.2. press **U** to open the settings (rebind it in Controls), or use Mod Menu. the settings menu is built into the mod, it only needs fabric api. color picker with hex field, a live preview, sliders and switches.
+client side fabric mod for 1.21.11, 26.1 and 26.2. press **U** to open the settings (press it again to close, rebind it in Controls), or use Mod Menu. the settings menu is built into the mod, it only needs fabric api. color picker with hex field, a live preview, sliders and switches.
 
+- **aura and inside**: the glow around the crystal and a second one on the pink core, each with its own color, size, strength, softness, blend, effect and range
 - **color**: any color
 - **size**: how big the glow is (10% to 500%)
 - **strength**: how bright it is (0% to 500%), above 100% it gets brighter than normal
@@ -18,9 +19,9 @@ client side fabric mod for 1.21.11, 26.1 and 26.2. press **U** to open the setti
 
 | jar | minecraft |
 |---|---|
-| `crystal-glow-mc1.21.11-1.0.0.jar` | 1.21.11 |
-| `crystal-glow-mc26.1-1.0.0.jar` | 26.1 |
-| `crystal-glow-mc26.2-1.0.0.jar` | 26.2 |
+| `crystal-glow-mc1.21.11-1.1.0.jar` | 1.21.11 |
+| `crystal-glow-mc26.1-1.1.0.jar` | 26.1 |
+| `crystal-glow-mc26.2-1.1.0.jar` | 26.2 |
 
 on the releases page. fabric loader 0.16 or newer, fabric api.
 

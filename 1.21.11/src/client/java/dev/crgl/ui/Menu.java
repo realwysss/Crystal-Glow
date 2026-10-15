@@ -2,6 +2,7 @@ package dev.crgl.ui;
 
 import dev.crgl.Cfg;
 import dev.crgl.Colors;
+import dev.crgl.Lay;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +26,7 @@ public final class Menu {
     private static final int[] BACKDROPS = {0xFF0C0D12, 0xFF3A1F1A, 0xFF2E4A66, 0xFFD8D2C4};
     private static final String[] BACKDROP_NAMES = {"Night", "Nether", "Sky", "Sand"};
     private static final String[] TABS = {"Glow", "Effects", "Show"};
+    private static final String[] SECS = {"Aura", "Inside"};
     private static final String[] ANIMS = {"Static", "Pulse", "Flicker", "Rainbow", "Shimmer"};
 
     public interface Drag {
@@ -42,10 +44,15 @@ public final class Menu {
     private final Supplier<String> clipboard;
     private final List<Hit> hits = new ArrayList<>();
     private final Map<String, Float> fx = new HashMap<>();
-    private final float[] hsv;
+    private final float[] hsvA;
+    private final float[] hsvB;
     private String active;
     private Drag drag;
     private int tab;
+    private int sec;
+    private int sub = 0;
+    private float hitT = -9f;
+    private long seed = 7;
     private int backdrop;
     private boolean typing;
     private String hex = "";
@@ -61,7 +68,8 @@ public final class Menu {
         this.close = close;
         this.clipboard = clipboard;
         this.start = Cfg.c.copy();
-        this.hsv = Colors.hsv(Cfg.c.col);
+        this.hsvA = Colors.hsv(Cfg.c.col);
+        this.hsvB = Colors.hsv(Cfg.c.core.col);
     }
 
     public void cancel() {
@@ -84,6 +92,7 @@ public final class Menu {
         tip = null;
         open = ease(open, 1f, 9f);
         Cfg c = Cfg.c;
+        Lay l = cur();
 
         float cw = Math.min(width - 24, 430);
         float ch = Math.min(height - 12, 252);
@@ -98,13 +107,17 @@ public final class Menu {
         g.ring(x, y, cw, ch, 14, 1, fade(0x5CFFFFFF), fade(0x0FFFFFFF));
 
         header(g, c, x, y, cw);
+        segmented(g, "sec", x + cw / 2f - 50, y + 7, 100, 16, SECS, sec, i -> {
+            commitHex();
+            sec = i;
+        });
         g.fill(x + 16, y + 32, cw - 32, 1, 0, fade(0x16FFFFFF));
 
         float top = y + 42;
         float bottom = y + ch - 36;
         float lw = Math.max(108, Math.min(146, cw * 0.34f));
         float lx = x + 14;
-        preview(g, c, lx, top, lw, bottom - top);
+        preview(g, c, l, lx, top, lw, bottom - top);
 
         float rx = lx + lw + 12;
         float rw = x + cw - 14 - rx;
@@ -115,9 +128,9 @@ public final class Menu {
         float cy = top + 26;
         float space = bottom - cy;
         switch (tab) {
-            case 0 -> glow(g, c, rx, cy, rw, space);
-            case 1 -> effects(g, c, rx, cy, rw, space);
-            default -> show(g, c, rx, cy, rw, space);
+            case 0 -> glow(g, l, rx, cy, rw, space);
+            case 1 -> effects(g, l, rx, cy, rw, space);
+            default -> show(g, c, l, rx, cy, rw, space);
         }
 
         footer(g, x, y + ch - 28, cw);
@@ -144,7 +157,7 @@ public final class Menu {
         hits.add(new Hit("masterrow", lx - 4, y + 6, tx + 26 - (lx - 4), 18, flip, null, null));
     }
 
-    private void preview(Canvas g, Cfg c, float x, float y, float w, float h) {
+    private void preview(Canvas g, Cfg c, Lay l, float x, float y, float w, float h) {
         g.fill(x, y, w, h, 10, fade(0x30000000), fade(0x58000000));
         float bgT = anim("bg", backdrop, 10f);
         int from = BACKDROPS[(int) Math.floor(bgT) % BACKDROPS.length];
@@ -155,30 +168,7 @@ public final class Menu {
         int label = Colors.luma(bg) > 0.55f ? 0xAA000000 : 0x99FFFFFF;
         g.text("Preview", x + 10, y + 9, fade(label));
 
-        float k = c.on ? c.str / 100f : 0f;
-        float t = clock * c.spd / 100f;
-        float size = 1f;
-        int col = c.col;
-        switch (c.anim) {
-            case 1 -> k *= 0.7f + 0.3f * (float) Math.sin(t * 5f);
-            case 2 -> k *= 0.75f + 0.25f * (float) Math.sin(t * 17f) * (float) Math.sin(t * 7.3f);
-            case 3 -> col = Colors.shift(col, t * 0.25f);
-            case 4 -> size = 0.88f + 0.12f * (float) Math.sin(t * 3f);
-            default -> {
-            }
-        }
-        float cx = x + w / 2f;
-        float cy = y + h / 2f - 3;
-        float base = Math.min(w, h - 20) * 0.5f * (c.rad / 100f) * size * 0.8f;
-        float soft = Colors.clamp(2f - c.fal / 100f, 0.4f, 2f);
-        for (int i = 0; i < 5; i++) {
-            float f = 1f - i / 5f;
-            float r = base * (0.35f + 0.65f * f) * soft;
-            float a = Colors.clamp(k * 0.22f * (1f - f * 0.35f), 0f, 1f);
-            g.shadow(cx - r * 0.3f, cy - r * 0.3f, r * 0.6f, r * 0.6f, r * 0.3f, r * 0.9f + 4, fade(Colors.alpha(0xFF000000 | col, a)));
-        }
-        float core = 7f;
-        g.fill(cx - core / 2f, cy - core / 2f, core, core, core / 2f, fade(Colors.alpha(0xFF000000 | Colors.mix(0xFF000000 | col, 0xFFFFFFFF, 0.55f), Colors.clamp(k, 0f, 1f))));
+        subject(g, c, l, x + w / 2f, y + h / 2f - 3, Math.min(w, h - 20), x, y, w, h);
 
         float d = 8;
         float gap = 7;
@@ -198,7 +188,60 @@ public final class Menu {
         }
     }
 
-    private void glow(Canvas g, Cfg c, float x, float y, float w, float space) {
+    private Lay cur() {
+        return sec == 0 ? Cfg.c : Cfg.c.core;
+    }
+
+    private float ak(Lay l) {
+        float k = Cfg.c.on && l.on ? l.str / 100f : 0f;
+        float t = clock * l.spd / 100f;
+        switch (l.anim) {
+            case 1 -> k *= 0.7f + 0.3f * (float) Math.sin(t * 5f);
+            case 2 -> k *= 0.75f + 0.25f * (float) Math.sin(t * 17f) * (float) Math.sin(t * 7.3f);
+            default -> {
+            }
+        }
+        return k;
+    }
+
+    private float asz(Lay l) {
+        float t = clock * l.spd / 100f;
+        return l.anim == 4 ? 0.88f + 0.12f * (float) Math.sin(t * 3f) : 1f;
+    }
+
+    private int acol(Lay l) {
+        return l.anim == 3 ? Colors.shift(l.col, clock * l.spd / 100f * 0.25f) : l.col;
+    }
+
+    private void halo(Canvas g, Lay l, float cx, float cy, float base, float k, int col) {
+        float soft = Colors.clamp(2f - l.fal / 100f, 0.4f, 2f);
+        for (int i = 0; i < 5; i++) {
+            float f = 1f - i / 5f;
+            float r = base * (0.35f + 0.65f * f) * soft;
+            float a = Colors.clamp(k * 0.3f * (1f - f * 0.35f), 0f, 1f);
+            g.shadow(cx - r * 0.3f, cy - r * 0.3f, r * 0.6f, r * 0.6f, r * 0.3f, r * 0.9f + 4, fade(Colors.alpha(0xFF000000 | col, a)));
+        }
+    }
+
+    private void click(String id, float x, float y, float w, float h, Runnable run) {
+        boolean over = hover(x, y, w, h);
+        if (over) tip = "Click to change";
+        hits.add(new Hit(id, x, y, w, h, run, null, null));
+    }
+
+    private void subject(Canvas g, Cfg c, Lay l, float cx, float cy, float s, float px, float py, float pw, float ph) {
+        float sz = s * 0.72f;
+        halo(g, c, cx, cy, s * 0.66f * (c.rad / 100f) * asz(c), ak(c), acol(c));
+        g.item("crystal", cx - sz / 2f, cy - sz / 2f, sz);
+        halo(g, c.core, cx, cy, s * 0.3f * (c.core.rad / 100f) * asz(c.core), ak(c.core), acol(c.core));
+        click("subj", px, py, pw, ph - 24, () -> {
+            commitHex();
+            sec = 1 - sec;
+        });
+    }
+
+
+    private void glow(Canvas g, Lay c, float x, float y, float w, float space) {
         float step = space >= 140 ? 24 : 22;
         float ph = Math.max(34, Math.min(62, space - 21 - step * 3));
         picker(g, "c", c, x, y, w, ph);
@@ -208,7 +251,7 @@ public final class Menu {
         slider(g, "fal", "Softness", x, sy + step * 2, w, c.fal, 25f, 300f, 5f, v -> c.fal = (int) v, c.fal + "%");
     }
 
-    private void effects(Canvas g, Cfg c, float x, float y, float w, float space) {
+    private void effects(Canvas g, Lay c, float x, float y, float w, float space) {
         float gap = Colors.clamp((space - 90) / 4f, 3f, 10f);
         g.text("Effect", x, y + 1, fade(MUTED));
         segmented(g, "anim", x, y + 12, w, 16, ANIMS, c.anim, i -> c.anim = i);
@@ -220,12 +263,16 @@ public final class Menu {
         segmented(g, "blend", x + w - sw, sy, sw, 16, new String[]{"Additive", "Screen"}, c.blend, i -> c.blend = i);
     }
 
-    private void show(Canvas g, Cfg c, float x, float y, float w, float space) {
+    private void show(Canvas g, Cfg c, Lay l, float x, float y, float w, float space) {
         float step = 18;
         float top = y + 1;
+        if (sec == 1) {
+            row(g, "con", "Inside glow", null, x, top, w, l.on, () -> l.on = !l.on);
+            top += step;
+        }
         float sy = top + step * 0 + 6;
-        slider(g, "rng", "Range", x, sy, w, c.rng, 8f, 128f, 2f, v -> c.rng = (int) v, c.rng + " blocks");
-        slider(g, "max", "Max glows", x, sy + 24, w, c.max, 1f, 256f, 1f, v -> c.max = (int) v, String.valueOf(c.max));
+        slider(g, "rng", "Range", x, sy, w, l.rng, 8f, 128f, 2f, v -> l.rng = (int) v, l.rng + " blocks");
+        slider(g, "max", "Max glows", x, sy + 24, w, l.max, 1f, 256f, 1f, v -> l.max = (int) v, String.valueOf(l.max));
     }
 
     private void footer(Canvas g, float x, float y, float w) {
@@ -241,7 +288,8 @@ public final class Menu {
         });
         button(g, "reset", "Defaults", x + 14, y, bw + 6, false, () -> {
             Cfg.c = new Cfg();
-            System.arraycopy(Colors.hsv(Cfg.c.col), 0, hsv, 0, 3);
+            System.arraycopy(Colors.hsv(Cfg.c.col), 0, hsvA, 0, 3);
+            System.arraycopy(Colors.hsv(Cfg.c.core.col), 0, hsvB, 0, 3);
         });
     }
 
@@ -349,7 +397,8 @@ public final class Menu {
         hits.add(new Hit(id, x, y, w, h, run, null, null));
     }
 
-    private void picker(Canvas g, String id, Cfg l, float x, float y, float w, float h) {
+    private void picker(Canvas g, String id, Lay l, float x, float y, float w, float h) {
+        float[] hsv = sec == 0 ? hsvA : hsvB;
         float sw = Math.round(w * 0.52f);
         int hueCol = 0xFF000000 | Colors.fromHsv(hsv[0], 1f, 1f);
         g.shadow(x, y + 1, sw, h, 7, 5, fade(0x70000000));
@@ -415,9 +464,10 @@ public final class Menu {
     }
 
     private void apply(String s) {
-        int col = Colors.parse(s, Cfg.c.col);
-        Cfg.c.col = col;
-        System.arraycopy(Colors.hsv(col), 0, hsv, 0, 3);
+        Lay l = cur();
+        int col = Colors.parse(s, l.col);
+        l.col = col;
+        System.arraycopy(Colors.hsv(col), 0, sec == 0 ? hsvA : hsvB, 0, 3);
     }
 
     private static boolean valid(String s) {
@@ -527,7 +577,7 @@ public final class Menu {
     }
 
     private int accent() {
-        int b = Cfg.c.col;
+        int b = cur().col;
         int col = 0xFF000000 | b;
         return Colors.luma(b) < 0.22f ? 0xFF000000 | Colors.mix(col, 0xFFFFFFFF, 0.4f) : col;
     }

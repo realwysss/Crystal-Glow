@@ -12,7 +12,7 @@ public class CrGl implements ClientModInitializer {
 		Cfg.ld();
 		KeyMapping k = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.crystalglow.open", InputConstants.KEY_U, KeyMapping.Category.register(Identifier.fromNamespaceAndPath("crystalglow", "main"))));
 		ClientTickEvents.END_CLIENT_TICK.register(m -> {
-			while (k.consumeClick()) if (m.screen == null) m.setScreen(CfgScr.mk(null));
+			while (k.consumeClick()) if (m.screen == null) m.setScreen(new dev.crgl.ui.Panel(null));
 		});
 	}
 }

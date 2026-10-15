@@ -3,6 +3,7 @@
   "package": "dev.crgl.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
-    "LvRdMxn"
+    "LvRdMxn",
+    "FrostMxn"
   ]
 }

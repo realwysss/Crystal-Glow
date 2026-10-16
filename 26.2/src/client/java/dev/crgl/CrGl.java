@@ -14,7 +14,9 @@ public class CrGl implements ClientModInitializer {
 		Cfg.ld();
 		KeyMapping k = key = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.crystalglow.open", InputConstants.KEY_U, KeyMapping.Category.register(Identifier.fromNamespaceAndPath("crystalglow", "main"))));
 		ClientTickEvents.END_CLIENT_TICK.register(m -> {
-			while (k.consumeClick()) if (m.gui.screen() == null) m.gui.setScreen(new dev.crgl.ui.Panel(null));
+			while (k.consumeClick()) if (m.gui.screen() == null) {
+				if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("wysslib")) m.gui.setScreen(new dev.crgl.ui.Panel(null));
+			}
 		});
 	}
 }

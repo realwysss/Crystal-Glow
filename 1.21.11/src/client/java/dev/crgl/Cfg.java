@@ -9,10 +9,14 @@ import net.fabricmc.loader.api.FabricLoader;
 public class Cfg extends Lay {
 	public Lay core = Lay.of(0xff7ae8, 60, 50, 1, 64, 64);
 
-	public static final long T0 = System.nanoTime();
+	public static long T0 = System.nanoTime();
 	static final Gson G = new GsonBuilder().setPrettyPrinting().create();
 	static final Path P = FabricLoader.getInstance().getConfigDir().resolve("crystalglow.json");
 	public static Cfg c = new Cfg();
+
+	public static String json() {
+		return G.toJson(c);
+	}
 
 	public Lay[] layers() {
 		return core.on ? new Lay[]{this, core} : new Lay[]{this};
